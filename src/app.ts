@@ -1,10 +1,19 @@
-import express from 'express';
-
-const app = express();
+import {expr} from './expr';
+import { createServer } from 'http';
+import { options } from './socketioOptions';
+import { Socket, Server } from 'socket.io';
 const port = 3000;
-app.get('/', (_req, res) => {
-    res.send("Love and courage are the key to happiness");
+
+const httpServer = createServer(expr);
+const io = new Server(httpServer);
+
+io.on("connection", (socket: Socket) => {
+    console.log(`accepted a connection from socket.id = ${socket.id}`);
+    socket.on('disconnect', () => {
+        console.log(`disconnected user with id=${socket.id}.`);
+    })
 });
-app.listen(port, () => {
-    return console.log(`Server is listening on ${port}`);
+
+httpServer.listen(port, () => {
+    console.log(`Listening on *:${port}`);
 });
