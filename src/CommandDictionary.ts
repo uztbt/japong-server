@@ -16,6 +16,17 @@ export type CommandDictionary = {
   [Command.MOVE]: boolean
 };
 
+export function createDefeultCommandDictionary(): CommandDictionary {
+  return {
+    [Command.UP]: false,
+    [Command.DOWN]: false,
+    [Command.LEFT]: false,
+    [Command.RIGHT]: false,
+    [Command.ENTER]: false,
+    [Command.MOVE]: false
+  }
+}
+
 export function commandDictToString(dict: CommandDictionary) {
   return `UP ${dict[Command.UP]}, DOWN ${dict[Command.DOWN]}, LEFT ${dict[Command.LEFT]}, RIGHT ${dict[Command.RIGHT]}, ENTER ${dict[Command.ENTER]}, MOVE ${dict[Command.MOVE]}`;
 }
