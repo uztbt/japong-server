@@ -16,7 +16,7 @@ export const config = {
   },
   ball: {
     size: 10,
-    speed: 8,
+    speed: 4,
     deltaAngle: Math.PI / 6,
     acceleration: 1.02,
   },

@@ -17,6 +17,7 @@ export class Ball extends Movable {
   private paddles: Paddle[];
   private sideLines: Line[];
   private endLines: EndLine[];
+  private onScored: (playerId: PlayerID) => void;
 
   constructor(
     x: number,
@@ -28,7 +29,8 @@ export class Ball extends Movable {
     acceleration: number,
     paddles: Paddle[],
     sideLines: Line[],
-    endLines: EndLine[]
+    endLines: EndLine[],
+    onScored: (playerId: PlayerID) => void
   ) {
     super(x, y, w, h);
     this.speed = speed;
@@ -48,6 +50,7 @@ export class Ball extends Movable {
     this.paddles = paddles;
     this.sideLines = sideLines;
     this.endLines = endLines;
+    this.onScored = onScored;
   }
 
   private updateVelocity() {
@@ -107,12 +110,7 @@ export class Ball extends Movable {
   private collisionWithEndLines(endLines: EndLine[]) {
     endLines.forEach(endLine => {
       if (this.isCollidingWith(endLine)) {
-        // TELL the score to the game
-        // if (endLine.ownedBy === ) {
-        //   Game.onScored(Players.COMPUTER);
-        // } else {
-        //   Game.onScored(Players.PLAYER);
-        // }
+        this.onScored(endLine.ownedBy);
       }
     })
   }

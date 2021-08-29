@@ -2,7 +2,7 @@ import {expr} from './expr';
 import { createServer } from 'http';
 import { config } from './config';
 import { Socket, Server } from 'socket.io';
-import { CommandDictionary } from './CommandDictionary';
+import { CommandDictionary, createDefeultCommandDictionary } from './CommandDictionary';
 import { findAvailableRoom } from './room';
 import { Game } from './game/Game';
 const port = 3000;
@@ -18,20 +18,15 @@ type GameRoom = {
 
 const gameRooms: GameRoom[] = [];
 
+function onGameOver(gameRooms: GameRoom[], roomNo: number) {
+    return () => gameRooms[roomNo].sockets.forEach(socket => socket.disconnect());
+}
+
 io.on("connection", (socket: Socket) => {
     console.log(`accepted a connection from socket.id = ${socket.id}`);
     socket.on('disconnect', () => {
         console.log(`disconnected user with id=${socket.id}.`);
         gameRooms[roomNo].game?.terminate();
-        if (room.size > 0) {
-            const opponent = gameRooms[roomNo].sockets[1-playerId];
-            opponent.emit("wait for opponent");
-            gameRooms[roomNo] = {
-                game: null,
-                sockets: [opponent],
-                commandDicts: []
-            };
-        }
     })
     const rooms = io.of("/").adapter.rooms;
     const roomNo = findAvailableRoom(rooms, config.maxRooms);
@@ -53,7 +48,7 @@ io.on("connection", (socket: Socket) => {
             gameRooms[roomNo] = {
                 game: null,
                 sockets: [socket],
-                commandDicts: []
+                commandDicts: [createDefeultCommandDictionary(), createDefeultCommandDictionary()]
             };
             break;
         case 2:
@@ -64,7 +59,8 @@ io.on("connection", (socket: Socket) => {
             setTimeout(() => {
                 gameRooms[roomNo].game = new Game(
                     () => gameRooms[roomNo].commandDicts[0],
-                    () => gameRooms[roomNo].commandDicts[1], io, roomName);
+                    () => gameRooms[roomNo].commandDicts[1], io, roomName,
+                    onGameOver(gameRooms, roomNo));
             }, 3000);
             break;
     }

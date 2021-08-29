@@ -22,14 +22,16 @@ export class Game {
   private intervalId: number;
   private io: Server<DefaultEventsMap, DefaultEventsMap>;
   private roomName: string;
+  private onGameOver: () => void;
 
-  constructor(input0: Input, input1: Input, io: Server<DefaultEventsMap, DefaultEventsMap>, roomName: string) {
+  constructor(input0: Input, input1: Input, io: Server<DefaultEventsMap, DefaultEventsMap>, roomName: string, onGameOver: ()=>void) {
     this.io = io;
     this.roomName = roomName;
     this.loopTimestamp = 0;
     this.scores = [0, 0];
     this.ballLaunchTimer = 0;
     this.ball = null;
+    this.onGameOver = onGameOver;
 
     const sidelineWidth = config.canvas.height - 2 * config.court.offset;
     const endlineWidth = config.canvas.width - 2 * config.court.offset;
@@ -98,7 +100,7 @@ export class Game {
           config.canvas.height / 2 - config.ball.size / 2,
           config.ball.size, config.ball.size,
           config.ball.speed, config.ball.deltaAngle, config.ball.acceleration,
-          this.paddles, this.sideLines, this.endLines
+          this.paddles, this.sideLines, this.endLines, this.onScored.bind(this)
         );
       }
     } else {
@@ -113,9 +115,9 @@ export class Game {
     }
     const moveToEnding = this.update();
     if (moveToEnding) {
-      clearInterval(this.intervalId);
-      // Ending.init(Game.playerScore, Game.computerScore);
-      // requestAnimationFrame(Ending.loop);
+      this.terminate();
+      this.io.to(this.roomName).emit("game over", {scores: this.scores});
+      this.onGameOver();
     } else {
       this.sendBoard();
     }
