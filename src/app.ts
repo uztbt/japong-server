@@ -15,7 +15,12 @@ io.on("connection", (socket: Socket) => {
     })
     socket.on("commandDict", (commandDict: CommandDictionary) => {
         console.log(commandDictToString(commandDict));
-    })
+    });
+    socket.emit("board", [{x: 50, y: 100, w: 50, h: 100}]);
+    setTimeout(() => socket.emit("countDown", 3), 0);
+    setTimeout(() => socket.emit("countDown", 2), 1000);
+    setTimeout(() => socket.emit("countDown", 1), 2000);
+    setTimeout(() => socket.emit("countDown", 0), 3000);
 });
 
 httpServer.listen(port, () => {
