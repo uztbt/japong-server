@@ -2,7 +2,7 @@ import {expr} from './expr';
 import { createServer } from 'http';
 import { config } from './config';
 import { Socket, Server } from 'socket.io';
-import { CommandDictionary, commandDictToString } from './CommandDictionary';
+import { CommandDictionary } from './CommandDictionary';
 import { findAvailableRoom } from './room';
 import { Game } from './game/Game';
 const port = 3000;
@@ -22,6 +22,16 @@ io.on("connection", (socket: Socket) => {
     console.log(`accepted a connection from socket.id = ${socket.id}`);
     socket.on('disconnect', () => {
         console.log(`disconnected user with id=${socket.id}.`);
+        gameRooms[roomNo].game?.terminate();
+        if (room.size > 0) {
+            const opponent = gameRooms[roomNo].sockets[1-playerId];
+            opponent.emit("wait for opponent");
+            gameRooms[roomNo] = {
+                game: null,
+                sockets: [opponent],
+                commandDicts: []
+            };
+        }
     })
     const rooms = io.of("/").adapter.rooms;
     const roomNo = findAvailableRoom(rooms, config.maxRooms);
@@ -54,14 +64,14 @@ io.on("connection", (socket: Socket) => {
             setTimeout(() => {
                 gameRooms[roomNo].game = new Game(
                     () => gameRooms[roomNo].commandDicts[0],
-                    () => gameRooms[roomNo].commandDicts[1]);
+                    () => gameRooms[roomNo].commandDicts[1], io, roomName);
             }, 3000);
             break;
     }
     socket.on("commandDict", (commandDict: CommandDictionary) => {
+        console.log(`get commandDict from ${playerId}: ${commandDict}`);
         gameRooms[roomNo].commandDicts[playerId] = commandDict;
     });
-    // socket.emit("board", [{x: 50, y: 100, w: 50, h: 100}]);
 });
 
 httpServer.listen(port, () => {

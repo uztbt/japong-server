@@ -19,6 +19,13 @@ export abstract class Drawable {
   isCollidingWith(d: Drawable): boolean {
     return areColliding(d, this);
   }
+
+  serialize(): {x: number, y: number, w: number, h: number} {
+    return {
+      x: this.x, y: this.y,
+      w: this.width, h: this.height
+    };
+  }
 }
 
 export function areColliding(d1: Drawable, d2: Drawable): boolean {

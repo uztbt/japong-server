@@ -4,7 +4,12 @@ import { Input, Paddle } from "./Paddle";
 import { Ball } from "./Ball";
 import { config } from "./config";
 import { EndLine, Line } from "./Line";
+import { Server } from "socket.io";
+import { DefaultEventsMap } from "socket.io/dist/typed-events";
 
+export interface Transmitter {
+  send(eventName: string, any: any): void;
+}
 
 export class Game {
   private loopTimestamp: number;
@@ -14,8 +19,13 @@ export class Game {
   private ball: Ball | null;
   private sideLines: Line[];
   private endLines: EndLine[];
+  private intervalId: number;
+  private io: Server<DefaultEventsMap, DefaultEventsMap>;
+  private roomName: string;
 
-  constructor(input1: Input, input2: Input) {
+  constructor(input0: Input, input1: Input, io: Server<DefaultEventsMap, DefaultEventsMap>, roomName: string) {
+    this.io = io;
+    this.roomName = roomName;
     this.loopTimestamp = 0;
     this.scores = [0, 0];
     this.ballLaunchTimer = 0;
@@ -60,7 +70,7 @@ export class Game {
         config.paddle.width, config.paddle.height,
         config.player.speed,
         this.sideLines,
-        input1
+        input0
       ),
       new Paddle(
         config.canvas.width / 2 - config.paddle.width / 2,
@@ -68,10 +78,11 @@ export class Game {
         config.paddle.width, config.paddle.height,
         config.computer.speed,
         this.sideLines,
-        input2
+        input1
       )
     ];
     this.scheduleBallLaunch(60);
+    this.intervalId = setInterval(this.loop.bind(this), config.secondsPerFrame);
   }
 
   update(): boolean {
@@ -98,16 +109,15 @@ export class Game {
 
   loop(timestamp: number): void {
     if (timestamp - this.loopTimestamp <= config.secondsPerFrame) {
-      requestAnimationFrame(this.loop);
       return;
     }
     const moveToEnding = this.update();
     if (moveToEnding) {
+      clearInterval(this.intervalId);
       // Ending.init(Game.playerScore, Game.computerScore);
       // requestAnimationFrame(Ending.loop);
     } else {
-      // Game.draw();
-      // requestAnimationFrame(Game.loop);
+      this.sendBoard();
     }
   }
 
@@ -119,5 +129,30 @@ export class Game {
   private scheduleBallLaunch(frames: number) {
     this.ball = null;
     this.ballLaunchTimer = frames;
+  }
+
+  private getDrawables() {
+    const base = [
+      ...this.sideLines.map(sl => sl.serialize()),
+      ...this.endLines.map(el => el.serialize()),
+      ...this.paddles.map(pd => pd.serialize()),
+    ];
+    const ball = this.ball?.serialize();
+    if (typeof ball === "undefined") {
+      return base;
+    } else {
+      return base.concat(ball);
+    }
+  }
+  
+  private sendBoard() {
+    this.io.to(this.roomName).emit("board", {
+      drawables: this.getDrawables(),
+      scores: this.scores
+    })
+  }
+
+  terminate() {
+    clearInterval(this.intervalId);
   }
 }
