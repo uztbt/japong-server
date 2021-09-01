@@ -30,12 +30,13 @@ export class Ball extends Movable {
     paddles: Paddle[],
     sideLines: Line[],
     endLines: EndLine[],
+    receiver: PlayerID,
     onScored: (playerId: PlayerID) => void
   ) {
     super(x, y, w, h);
     this.speed = speed;
     this.deltaAngle = deltaAngle;
-    this.angle = this.randomAngle();
+    this.angle = this.randomAngle(receiver);
     this.lastHitBy = null;
     this.updateVelocity();
     this.boundDownwardScale = scale(
@@ -60,8 +61,13 @@ export class Ball extends Movable {
     this.vy = this.speed * uvy;
   }
 
-  private randomAngle(): number {
-    const offset = Math.PI + 2 * this.deltaAngle;
+  private randomAngle(receiver: number): number {
+    let offset: number;
+    if (receiver === 0) {
+      offset = 2 * this.deltaAngle;
+    } else {
+      offset = Math.PI + 2 * this.deltaAngle;
+    }
     const variable = (Math.PI - 4 * this.deltaAngle) * Math.random();
     return offset + variable;
   }
