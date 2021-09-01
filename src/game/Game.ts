@@ -17,6 +17,7 @@ export class Game {
   private paddles: Paddle[];
   private ballLaunchTimer: number;
   private ball: Ball | null;
+  private receiver: PlayerID;
   private sideLines: Line[];
   private endLines: EndLine[];
   private intervalId: number;
@@ -31,6 +32,7 @@ export class Game {
     this.scores = [0, 0];
     this.ballLaunchTimer = 0;
     this.ball = null;
+    this.receiver = 0;
     this.onGameOver = onGameOver;
 
     const sidelineWidth = config.canvas.height - 2 * config.court.offset;
@@ -100,7 +102,7 @@ export class Game {
           config.canvas.height / 2 - config.ball.size / 2,
           config.ball.size, config.ball.size,
           config.ball.speed, config.ball.deltaAngle, config.ball.acceleration,
-          this.paddles, this.sideLines, this.endLines, this.onScored.bind(this)
+          this.paddles, this.sideLines, this.endLines, this.receiver, this.onScored.bind(this)
         );
       }
     } else {
@@ -125,6 +127,7 @@ export class Game {
 
   public onScored(playerId: PlayerID): void {
     this.scores[playerId]++;
+    this.receiver = 1 - this.receiver;
     this.scheduleBallLaunch(60);
   }
 
