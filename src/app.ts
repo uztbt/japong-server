@@ -5,7 +5,6 @@ import { Socket, Server } from 'socket.io';
 import { CommandDictionary, createDefeultCommandDictionary } from './CommandDictionary';
 import { findAvailableRoom } from './room';
 import { Game } from './game/Game';
-const port = 3000;
 
 const httpServer = createServer(expr);
 const io = new Server(httpServer, config.socketIOOpts);
@@ -70,6 +69,6 @@ io.on("connection", (socket: Socket) => {
     });
 });
 
-httpServer.listen(port, () => {
-    console.log(`Listening on *:${port}`);
+httpServer.listen(config.port, () => {
+    console.log(`Listening on *:${config.port}`);
 });
