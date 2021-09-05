@@ -8,4 +8,4 @@ COPY . .
 RUN yarn -s tsc
 EXPOSE 8080
 
-ENTRYPOINT [ "node", "dist/app.js" ]
+ENTRYPOINT [ "node", "dist/app.js", "--mode", "release" ]

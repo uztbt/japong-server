@@ -18,5 +18,5 @@ Change `src/config.ts` to suite your environment.
 
 ```zsh
 yarn
-yarn start
+yarn debug
 ```
