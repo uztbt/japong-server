@@ -1,4 +1,4 @@
-import {expr} from './expr';
+import express from 'express';
 import { createServer } from 'http';
 import { executionModes, getConfig } from './config';
 import { Server } from 'socket.io';
@@ -17,7 +17,8 @@ async function main() {
     console.log(`Execution mode: ${argv.mode}`);
     const config = getConfig(argv.mode);
 
-    const httpServer = createServer(expr);
+    const expressServer = express();
+    const httpServer = createServer(expressServer);
     const io = new Server(httpServer, config.socketIOOpts);
 
     const roomManager = new NaiveRoomManager(config.maxRooms);
