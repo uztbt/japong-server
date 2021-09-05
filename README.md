@@ -20,3 +20,10 @@ Change `src/config.ts` to suite your environment.
 yarn
 yarn debug
 ```
+
+## How the Docker Image is published
+
+```
+docker build -t uztbt/japong-server:x.x.x .
+docker push uztbt/japong-server:x.x.x
+```
