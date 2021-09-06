@@ -5,15 +5,15 @@ import { Game } from "./game/Game";
 
 type IO = Server<DefaultEventsMap, DefaultEventsMap>;
 
-interface RoomManager {
-  start(anything: any): void;
-}
-
 type GameRoom = {
   game: Game | null,
   sockets: Socket[],
   commandDicts: CommandDictionary[]
 };
+
+interface RoomManager {
+  start(anything: any): void;
+}
 
 export class NaiveRoomManager implements RoomManager {
   private maxRooms: number;
@@ -30,7 +30,7 @@ export class NaiveRoomManager implements RoomManager {
   private onConnection = (io: IO) => (socket: Socket) => {
     console.log(`accepted a connection from socket.id = ${socket.id}`);
     const operatingRooms = io.of('/').adapter.rooms;
-    const roomNo = this.findAvailableRoom(operatingRooms);
+    const roomNo = this.assignRoom(operatingRooms);
     if (roomNo === -1) {
       socket.emit("unavailable", "All rooms are full");
       socket.disconnect();
@@ -77,13 +77,30 @@ export class NaiveRoomManager implements RoomManager {
 
   private onGameOver = (roomNo: number) => () =>
     this.rooms[roomNo]?.sockets.forEach(socket => socket.disconnect());
-  
-  private findAvailableRoom(operatingRooms: Map<string, Set<string>>): number {
-    for (let i = 0; i < this.maxRooms; i++) {
-      const sockets = operatingRooms.get(`${i}`);
-      if (typeof sockets === "undefined" || sockets!.size < 2)
-        return i;
+
+  private assignRoom(operatingRooms: Map<string, Set<string>>): number {
+    const [vacantRooms, waitingRooms] = this.availableRoomNos(operatingRooms);
+    if (waitingRooms.length > 0) {
+      return waitingRooms[0];
+    } else if (vacantRooms.length > 0) {
+      return vacantRooms[0];
+    } else {
+      return -1;
     }
-    return -1; // not found
+  }
+  
+  private availableRoomNos(operatingRooms: Map<string, Set<string>>): [number[], number[]] {
+    const vacantRooms: number[] = [];
+    const waitingRooms: number[] = [];
+
+    for (let i = 0; i < this.maxRooms; i++) {
+      const roomName = `${i}`;
+      const sockets = operatingRooms.get(roomName);
+      if (typeof sockets === "undefined")
+        vacantRooms.push(i);
+      else if (sockets!.size < 2)
+        waitingRooms.push(i);
+    }
+    return [vacantRooms, waitingRooms];
   }
 }
