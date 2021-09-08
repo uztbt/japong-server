@@ -1,6 +1,6 @@
 {
   "name": "japong-server",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "main": "dist/app.js",
   "repository": "git@github.com:uztbt/pong-server.git",
   "author": "Yuji Tabata <yujitabata@icloud.com>",
