@@ -17,7 +17,7 @@ export class Game {
   private paddles: Paddle[];
   private ballLaunchTimer: number;
   private ball: Ball | null;
-  private receiver: PlayerID;
+  private server: PlayerID;
   private sideLines: Line[];
   private endLines: EndLine[];
   private intervalId: number;
@@ -32,7 +32,7 @@ export class Game {
     this.scores = [0, 0];
     this.ballLaunchTimer = 0;
     this.ball = null;
-    this.receiver = 0;
+    this.server = 0;
     this.onGameOver = onGameOver;
 
     const sidelineWidth = config.canvas.height - 2 * config.court.offset;
@@ -97,13 +97,7 @@ export class Game {
     if (this.ball === null) {
       this.ballLaunchTimer -= 1;
       if (this.ballLaunchTimer <= 0) {
-        this.ball = new Ball(
-          config.canvas.width / 2 - config.ball.size / 2,
-          config.canvas.height / 2 - config.ball.size / 2,
-          config.ball.size, config.ball.size,
-          config.ball.speed, config.ball.deltaAngle, config.ball.acceleration,
-          this.paddles, this.sideLines, this.endLines, this.receiver, this.onScored.bind(this)
-        );
+        this.ball = this.launchBall();
       }
     } else {
       this.ball.update();
@@ -127,13 +121,27 @@ export class Game {
 
   public onScored(playerId: PlayerID): void {
     this.scores[playerId]++;
-    this.receiver = 1 - this.receiver;
+    this.server = 1 - this.server;
     this.scheduleBallLaunch(60);
   }
 
   private scheduleBallLaunch(frames: number) {
     this.ball = null;
     this.ballLaunchTimer = frames;
+  }
+
+  private launchBall(): Ball {
+    const serverPaddle = this.paddles[this.server];
+    const x = serverPaddle.x + serverPaddle.width / 2 - config.ball.size / 2
+    const y = this.server === 0 ?
+      serverPaddle.y - config.ball.size :
+      serverPaddle.y + serverPaddle.height;
+      
+    return new Ball(x, y,
+      config.ball.size, config.ball.size,
+      config.ball.speed, config.ball.deltaAngle, config.ball.acceleration,
+      this.paddles, this.sideLines, this.endLines, this.server, this.onScored.bind(this)
+    );
   }
 
   private getDrawables() {

@@ -9,7 +9,6 @@ import { scale } from "./utils";
 export class Ball extends Movable {
   private speed: number;
   private angle: number;
-  private deltaAngle: number;
   private acceleration: number;
   private lastHitBy: PlayerID | null;
   private boundDownwardScale: (x: number) => number;
@@ -30,13 +29,12 @@ export class Ball extends Movable {
     paddles: Paddle[],
     sideLines: Line[],
     endLines: EndLine[],
-    receiver: PlayerID,
+    server: PlayerID,
     onScored: (playerId: PlayerID) => void
   ) {
     super(x, y, w, h);
     this.speed = speed;
-    this.deltaAngle = deltaAngle;
-    this.angle = this.randomAngle(receiver);
+    this.angle = this.randomAngle(server);
     this.lastHitBy = null;
     this.updateVelocity();
     this.boundDownwardScale = scale(
@@ -61,15 +59,15 @@ export class Ball extends Movable {
     this.vy = this.speed * uvy;
   }
 
-  private randomAngle(receiver: number): number {
+  private randomAngle(server: number): number {
     let offset: number;
-    if (receiver === 0) {
-      offset = 2 * this.deltaAngle;
+    if (server === 0) {
+      offset = Math.PI / 2;
     } else {
-      offset = Math.PI + 2 * this.deltaAngle;
+      offset = Math.PI / 2 * 3;
     }
-    const variable = (Math.PI - 4 * this.deltaAngle) * Math.random();
-    return offset + variable;
+    const salt = 0.01 * Math.random() - 0.005;
+    return offset - salt;
   }
 
   private flipHorizontally() {
