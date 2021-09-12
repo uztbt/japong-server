@@ -73,6 +73,8 @@ export class NaiveRoomManager implements RoomManager {
   private onDisconnect = (roomNo: number, socketId: string) => () => {
     console.log(`disconnected user with id = ${socketId}`);
     this.rooms[roomNo]?.game?.terminate();
+    const opponent = this.opponentSocket(roomNo, socketId);
+    opponent?.emit("opponent left");
   }
 
   private onGameOver = (roomNo: number) => () =>
@@ -102,5 +104,14 @@ export class NaiveRoomManager implements RoomManager {
         waitingRooms.push(i);
     }
     return [vacantRooms, waitingRooms];
+  }
+
+  private opponentSocket(roomNo: number, mySocketId: string) {
+    let index: number;
+    if (this.rooms[roomNo]?.sockets[0].id !== mySocketId)
+      index = 0;
+    else 
+      index = 1;
+    return this.rooms[roomNo]?.sockets[index];
   }
 }
