@@ -77,14 +77,22 @@ export class NaiveRoomManager implements RoomManager {
   private onDisconnect = (roomNo: number, socketId: string) => () => {
     console.log(`disconnected user with id = ${socketId}`);
     const room = this.rooms[roomNo];
-    room?.game?.terminate();
-    room?.timeoutIds.forEach(id => clearTimeout(id));
-    const opponent = this.cleanUpSockets(roomNo, socketId);
-    opponent?.emit("opponent left");
+    if (room?.game !== null) {
+      // Player disconnected in the middle of a game
+      room?.game?.terminate();
+      room?.timeoutIds.forEach(id => clearTimeout(id));
+      const opponent = this.cleanUpSockets(roomNo, socketId);
+      opponent?.emit("opponent left");
+    }
   }
 
-  private onGameOver = (roomNo: number) => () =>
-    this.rooms[roomNo]?.sockets.forEach(socket => socket.disconnect());
+  private onGameOver = (roomNo: number) => () => {
+    const room = this.rooms[roomNo]!;
+    room.game = null;
+    room.commandDicts = [];
+    room.timeoutIds = [];
+    room.sockets.forEach(socket => socket.disconnect())
+  };
 
   private assignRoom(operatingRooms: Map<string, Set<string>>): number {
     const [vacantRooms, waitingRooms] = this.availableRoomNos(operatingRooms);
