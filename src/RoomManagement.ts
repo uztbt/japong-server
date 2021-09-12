@@ -8,7 +8,8 @@ type IO = Server<DefaultEventsMap, DefaultEventsMap>;
 type GameRoom = {
   game: Game | null,
   sockets: Socket[],
-  commandDicts: CommandDictionary[]
+  commandDicts: CommandDictionary[],
+  timeoutIds: NodeJS.Timeout[]
 };
 
 interface RoomManager {
@@ -48,20 +49,23 @@ export class NaiveRoomManager implements RoomManager {
           this.rooms[roomNo] = {
               game: null,
               sockets: [socket],
-              commandDicts: [createDefeultCommandDictionary(), createDefeultCommandDictionary()]
+              commandDicts: [createDefeultCommandDictionary(), createDefeultCommandDictionary()],
+              timeoutIds: []
           };
           break;
       case 2:
-          this.rooms[roomNo]!.sockets.push(socket);
-          setTimeout(() => io.to(roomName).emit("countDown", 3), 0);
-          setTimeout(() => io.to(roomName).emit("countDown", 2), 1000);
-          setTimeout(() => io.to(roomName).emit("countDown", 1), 2000);
-          setTimeout(() => {
+        const room = this.rooms[roomNo]!;
+          room.sockets.push(socket);
+          room.timeoutIds.push(setTimeout(() => io.to(roomName).emit("countDown", 3), 0));
+          room.timeoutIds.push(setTimeout(() => io.to(roomName).emit("countDown", 2), 1000));
+          room.timeoutIds.push(setTimeout(() => io.to(roomName).emit("countDown", 1), 2000));
+          room.timeoutIds.push(setTimeout(() => {
+            room.timeoutIds = [];
               this.rooms[roomNo]!.game = new Game(
                   () => this.rooms[roomNo]!.commandDicts[0],
                   () => this.rooms[roomNo]!.commandDicts[1], io, roomName,
                   this.onGameOver(roomNo));
-          }, 3000);
+          }, 3000));
           break;
     }
     socket.on("commandDict", (commandDict: CommandDictionary) => {
@@ -72,8 +76,10 @@ export class NaiveRoomManager implements RoomManager {
 
   private onDisconnect = (roomNo: number, socketId: string) => () => {
     console.log(`disconnected user with id = ${socketId}`);
-    this.rooms[roomNo]?.game?.terminate();
-    const opponent = this.opponentSocket(roomNo, socketId);
+    const room = this.rooms[roomNo];
+    room?.game?.terminate();
+    room?.timeoutIds.forEach(id => clearTimeout(id));
+    const opponent = this.cleanUpSockets(roomNo, socketId);
     opponent?.emit("opponent left");
   }
 
@@ -106,12 +112,15 @@ export class NaiveRoomManager implements RoomManager {
     return [vacantRooms, waitingRooms];
   }
 
-  private opponentSocket(roomNo: number, mySocketId: string) {
-    let index: number;
-    if (this.rooms[roomNo]?.sockets[0].id !== mySocketId)
-      index = 0;
-    else 
-      index = 1;
-    return this.rooms[roomNo]?.sockets[index];
+  private cleanUpSockets(roomNo: number, mySocketId: string) {
+    const sockets = this.rooms[roomNo]?.sockets;
+    if (typeof sockets === "undefined") {
+      return;
+    }
+    if (sockets[0].id === mySocketId)
+      sockets.shift();
+    else
+      sockets.pop();
+    return sockets[0];
   }
 }
