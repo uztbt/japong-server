@@ -12,16 +12,32 @@ type GameRoom = {
   timeoutIds: NodeJS.Timeout[]
 };
 
-interface RoomManager {
+type GameOverview = {
+  status: string,
+  player0: string | null,
+  player1: string | null,
+  scores: number[] | null
+}
+
+export interface RoomManager {
   start(anything: any): void;
+  overview(): GameOverview[]
 }
 
 export class NaiveRoomManager implements RoomManager {
   private maxRooms: number;
-  private rooms: (GameRoom | undefined)[];
+  private rooms: GameRoom[];
   constructor(maxRooms: number) {
     this.maxRooms = maxRooms;
     this.rooms = Array(maxRooms);
+    for (let i = 0; i < maxRooms; i++) {
+      this.rooms[i] = {
+        game: null,
+        commandDicts: [],
+        timeoutIds: [],
+        sockets: []
+      }
+    }
   }
 
   start(io: IO): void {
@@ -88,10 +104,11 @@ export class NaiveRoomManager implements RoomManager {
 
   private onGameOver = (roomNo: number) => () => {
     const room = this.rooms[roomNo]!;
+    room.sockets.forEach(socket => socket.disconnect())
+    room.sockets = [];
     room.game = null;
     room.commandDicts = [];
     room.timeoutIds = [];
-    room.sockets.forEach(socket => socket.disconnect())
   };
 
   private assignRoom(operatingRooms: Map<string, Set<string>>): number {
@@ -131,4 +148,44 @@ export class NaiveRoomManager implements RoomManager {
       sockets.pop();
     return sockets[0];
   }
+
+  overview(): GameOverview[] {
+    return this.rooms.map(room => {
+      return this.roomOverview(room)}
+      , this);
+  }
+
+  private roomOverview(room: GameRoom): GameOverview {
+    switch(room.sockets.length) {
+      case 0:
+        return {
+          status: "NO_PLAYERS",
+          player0: null,
+          player1: null,
+          scores: null
+        }
+      case 1:
+        return {
+          status: "ONLY_PLAYER_0",
+          player0: "player 0",
+          player1: null,
+          scores: null
+        }
+      case 2:
+        return {
+          status: "IN_GAME",
+          player0: "player 0",
+          player1: "player 1",
+          scores: room.game!.getScores()
+        }
+      default:
+        console.error(`Unexpected room state. room = ${room}`);
+        return {
+          status: "NO_PLAYERS",
+          player0: null,
+          player1: null,
+          scores: null
+        }
+      }
+    }
 }

@@ -168,4 +168,8 @@ export class Game {
   terminate() {
     clearInterval(this.intervalId);
   }
+
+  getScores(): number[] {
+    return this.scores;
+  }
 }
