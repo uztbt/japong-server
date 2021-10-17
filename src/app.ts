@@ -5,7 +5,7 @@ import { Server } from 'socket.io';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as process from 'process';
-import { NaiveRoomManager } from './RoomManagement';
+import { NaiveRoomManager } from './NaiveRoomManager';
 
 async function main() {
     const argv = await yargs(hideBin(process.argv))
@@ -21,8 +21,7 @@ async function main() {
     const httpServer = createServer(expressServer);
     const io = new Server(httpServer, config.socketIOOpts);
 
-    const roomManager = new NaiveRoomManager(config.maxRooms);
-    roomManager.start(io);
+    const roomManager = new NaiveRoomManager(config.maxRooms, io);
 
     httpServer.listen(config.port, () => {
         console.log(`Listening on *:${config.port}`);
