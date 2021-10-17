@@ -22,7 +22,6 @@ async function main() {
     const io = new Server(httpServer, config.socketIOOpts);
 
     const roomManager = new NaiveRoomManager(config.maxRooms, io);
-    roomManager.start();
 
     httpServer.listen(config.port, () => {
         console.log(`Listening on *:${config.port}`);

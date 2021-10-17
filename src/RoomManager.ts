@@ -8,6 +8,7 @@ export type IO = Server<DefaultEventsMap, DefaultEventsMap>;
 export type GameRoom = {
   game: Game | null,
   sockets: Socket[],
+  playerNames: string[],
   commandDicts: CommandDictionary[],
   timeoutIds: NodeJS.Timeout[]
 };
@@ -17,13 +18,11 @@ export type GameRoom = {
  */
 export type JoinRoom = {
   roomNo: number;
-  playerId: number;
   playerName: string;
 }
 
 export interface RoomManager {
-  start(): void;
   onConnection(socket: Socket): void;
-  onJoinRoom(info: JoinRoom): void;
+  onJoinRoom(socket: Socket, info: JoinRoom): void;
   onCommandDict(roomNo: number, playerId: number, commandDict: CommandDictionary): void;
 }

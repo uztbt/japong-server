@@ -11,12 +11,9 @@ export class NaiveRoomManager implements RoomManager {
       this.maxRooms = maxRooms;
       this.rooms = Array(maxRooms);
       this.io = io;
-    }
-  
-    start(): void {
       this.io.on('connection', this.onConnection.bind(this));
     }
-  
+    
     onConnection(socket: Socket) {
       console.log(`accepted a connection from socket.id = ${socket.id}`);
       const operatingRooms = this.io.of('/').adapter.rooms;
@@ -38,6 +35,7 @@ export class NaiveRoomManager implements RoomManager {
             this.rooms[roomNo] = {
                 game: null,
                 sockets: [socket],
+                playerNames: ["Player0 Name"],
                 commandDicts: [createDefeultCommandDictionary(), createDefeultCommandDictionary()],
                 timeoutIds: []
             };
@@ -45,6 +43,7 @@ export class NaiveRoomManager implements RoomManager {
         case 2:
           const room = this.rooms[roomNo]!;
             room.sockets.push(socket);
+            room.playerNames.push("Player1 Name");
             room.timeoutIds.push(setTimeout(() => this.io.to(roomName).emit("countDown", 3), 0));
             room.timeoutIds.push(setTimeout(() => this.io.to(roomName).emit("countDown", 2), 1000));
             room.timeoutIds.push(setTimeout(() => this.io.to(roomName).emit("countDown", 1), 2000));
@@ -63,7 +62,7 @@ export class NaiveRoomManager implements RoomManager {
       socket.on('disconnect', () => this.onDisconnect(roomNo, socket.id));
     }
 
-    onJoinRoom(info: JoinRoom) {
+    onJoinRoom(socket: Socket, info: JoinRoom) {
         console.log(`Received joinRoom message from a client`);
     }
 
