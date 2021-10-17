@@ -2,11 +2,8 @@
 
 JaPong is a multi-player online Pong game. You can play JaPong at https://yuji.page/japong.
 
-If you want to play with a CPU, please visit https://yuji.page/pong instead.
-
-## Presentations
-
-- https://docs.google.com/presentation/d/16VqVcfmx04OMBQ8FGCYYtVTI0DqMqSits2B8AOB-Zm8/edit?usp=sharing
+If you want to play with a CPU, please visit https://yuji.page/pong.
+The documentation of JaPong is hosted at https://storage.googleapis.com/japong-document-web/index.html.
 
 ## System Requirements
 
